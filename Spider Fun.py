@@ -4,6 +4,7 @@ import xlsxwriter
 import os
 import xlrd
 
+#UPDATE ON 2019.2.8
 # read SR from txt file
 def getSR(path):
 
