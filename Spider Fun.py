@@ -19,7 +19,7 @@ def getSR(path):
 
 
 # read SR from xlsx file
-def getSRfromXlsx(filename):
+def getSRfromXlsx(filename ="SR data.xlsx"):
     # filedir = "C:/Users/Bailiang Wu/PycharmProjects/Spider/SR Source/"
     # file = "data74.xlsx"
     path = os.path.join(os.getcwd(), filename)
@@ -41,22 +41,50 @@ def getSRfromXlsx(filename):
 
     return SRlist
 
+# read Accountlist from xlsx file as keyword
+def getAcc(filename = "Transportation Account.xlsx"):
+
+    path = os.path.join(os.getcwd(), filename)
+    print(path)
+
+    Accountlist = list()
+    try:
+        wb = xlrd.open_workbook(path)
+        sheet = wb.sheet_by_index(0)
+        sheet.cell_value(0, 0)
+
+        for i in range(12, sheet.nrows):
+            value = sheet.cell_value(i, 4)
+            if value != '':
+                print(value)
+                Accountlist.append(value)
+    except:
+        print("file open error")
+
+    return Accountlist
+
+
 def basicInfo(soup):
-    tt = soup.select('body>table')
-    uu = tt[0].select('tr>td')
-    vv = uu[0].select('tr>td')
-    ww = vv[0].select('tr')
-    name = (ww[0].text).strip()
-    company = (ww[1].text).strip()
-    level=(ww[2].text).strip()
-    level=level[14:]
-    basic=[name, company, level]
+    try:
+        tt = soup.select('body>table')
+        uu = tt[0].select('tr>td')
+        vv = uu[0].select('tr>td')
+        ww = vv[0].select('tr')
+        name = (ww[0].text).strip()
+        company = (ww[1].text).strip()
+        level=(ww[2].text).strip()
+        level=level[14:]
+        basic=[name, company, level]
 
-    print(name)
-    print(company)
-    print(level)
+        print(name)
+        print(company)
+        print(level)
 
-    return(basic)
+        return(basic)
+    except:
+        msg="Error!"
+        return (msg)
+
 
 
 def getSRInfo(soup,sr):
@@ -122,8 +150,8 @@ urlroot="http://force.natinst.com:8000/pls/ebiz/niae_screenpop.main?p_incident_n
 
 # Get SR from EXCEL
 # file = "data74.xlsx"
-file = "data98.xlsx"
-srlist = getSRfromXlsx(file)
+# file = "data98.xlsx"
+srlist = getSRfromXlsx()
 file2save = "SR.xlsx"
 # Create a workbook and add a worksheet.
 workbook = xlsxwriter.Workbook(file2save)
@@ -144,7 +172,8 @@ for i in list(range(len(Header_Index))):
 
 
 Data=list()
-Keyword = ['北京','华为','机械']
+Keyword = set(getAcc())
+Keyword = list(Keyword)
 
 for sr in srlist:
 
@@ -153,13 +182,16 @@ for sr in srlist:
 
     # #### search sales name
     basic = basicInfo(soup) #### basic=[name, company, level]
-    salesman = findSale(soup)
-    SRdata = getSRInfo(soup,sr)  ##### SRinfo=[summary,status,owner,date]
-    data = [sr]+basic+SRdata+[salesman]+[URL]  ##['SR','Name','Company','Level','Summary','Status','Owner','Date','Sales']
-    Data.append(data)
+    if basic == "Error!":
+        print("error occured at:")
+        print(sr)
+    else:
+        salesman = findSale(soup)
+        SRdata = getSRInfo(soup,sr)  ##### SRinfo=[summary,status,owner,date]
+        data = [sr]+basic+SRdata+[salesman]+[URL]  ##['SR','Name','Company','Level','Summary','Status','Owner','Date','Sales']
+        Data.append(data)
 
 Data_auto = keywordCheck(Keyword,Data)
-
 
 #  写入excel
 for i,v in enumerate(Data):
